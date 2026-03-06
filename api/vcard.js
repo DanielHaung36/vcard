@@ -39,6 +39,6 @@ module.exports = (req, res) => {
   var fileName = (name || 'contact') + '.vcf';
 
   res.setHeader('Content-Type', 'text/vcard; charset=utf-8');
-  res.setHeader('Content-Disposition', 'attachment; filename="' + fileName + '"');
+  res.setHeader('Content-Disposition', 'inline; filename="' + fileName + '"');
   res.status(200).send(v);
 };
