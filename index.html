@@ -329,10 +329,13 @@
   var isWeChat = /MicroMessenger/i.test(navigator.userAgent);
 
   function showWeChatGuide() {
+    var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    var hint = isIOS
+      ? 'Tap <b>⋯</b> in the top-right corner<br>then select <b>"Open in Safari"</b><br>to save the contact'
+      : 'Tap <b>⋮</b> in the top-right corner<br>then select <b>"Open in Browser"</b><br>to save the contact';
     var overlay = document.createElement('div');
     overlay.className = 'wechat-overlay';
-    overlay.innerHTML = '<div class="arrow">⬆</div>'
-      + '<div class="hint">Tap <b>⋯</b> in the top-right corner<br>then select <b>"Open in Browser"</b><br>to save the contact</div>';
+    overlay.innerHTML = '<div class="arrow">⬆</div><div class="hint">' + hint + '</div>';
     overlay.addEventListener('click', function() { overlay.remove(); });
     document.body.appendChild(overlay);
   }
