@@ -338,44 +338,37 @@
     document.body.appendChild(overlay);
   }
 
+  function buildVCardUrl() {
+    var p = new URLSearchParams();
+    if (data.name) p.set('n', data.name);
+    if (data.title) p.set('t', data.title);
+    if (data.company) p.set('c', data.company);
+    if (data.phone) p.set('p', data.phone);
+    if (data.email) p.set('e', data.email);
+    if (data.website) p.set('w', data.website);
+    if (data.address) p.set('a', data.address);
+    return '/api/vcard?' + p.toString();
+  }
+
   function saveContact() {
     if (isWeChat) {
       showWeChatGuide();
       return;
     }
 
-    var vcard = buildVCard();
-    var fileName = (data.name || 'contact') + '.vcf';
-    var blob = new Blob([vcard], { type: 'text/vcard;charset=utf-8' });
     var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
     if (isIOS) {
+      // iOS Safari: blob URL triggers native "Add to Contacts"
+      var vcard = buildVCard();
+      var blob = new Blob([vcard], { type: 'text/vcard;charset=utf-8' });
       window.location.href = URL.createObjectURL(blob);
       return;
     }
 
-    // Android: try Web Share API first (shows share sheet → pick Contacts)
-    try {
-      var file = new File([blob], fileName, { type: 'text/vcard' });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        navigator.share({ files: [file] }).catch(function() {});
-        return;
-      }
-    } catch(e) {}
-
-    // Fallback: try blob URL navigation (works on Samsung Internet, some others)
-    var blobUrl = URL.createObjectURL(blob);
-    var w = window.open(blobUrl, '_blank');
-    if (w) return;
-
-    // Last resort: download .vcf file
-    var a = document.createElement('a');
-    a.href = blobUrl;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    showToast('File downloaded. Open the .vcf file to add contact.');
+    // Android: use server URL with proper Content-Type headers
+    // Most Android browsers will prompt "Import to Contacts" for real .vcf URLs
+    window.location.href = buildVCardUrl();
   }
 </script>
 </body>
