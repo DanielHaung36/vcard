@@ -152,6 +152,34 @@
     color: #999;
     font-size: 16px;
   }
+  .wechat-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 60px;
+  }
+  .wechat-overlay .arrow {
+    font-size: 48px;
+    color: #fff;
+    animation: bounceDown 1s infinite;
+    align-self: flex-end;
+    margin-right: 24px;
+  }
+  .wechat-overlay .hint {
+    color: #fff;
+    font-size: 18px;
+    text-align: center;
+    margin-top: 24px;
+    line-height: 1.8;
+  }
+  @keyframes bounceDown {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(10px); }
+  }
 </style>
 </head>
 <body>
@@ -298,25 +326,30 @@
     setTimeout(function() { el.remove(); }, duration || 4000);
   }
 
+  var isWeChat = /MicroMessenger/i.test(navigator.userAgent);
+
+  function showWeChatGuide() {
+    var overlay = document.createElement('div');
+    overlay.className = 'wechat-overlay';
+    overlay.innerHTML = '<div class="arrow">⬆</div>'
+      + '<div class="hint">Tap <b>⋯</b> in the top-right corner<br>then select <b>"Open in Browser"</b><br>to save the contact</div>';
+    overlay.addEventListener('click', function() { overlay.remove(); });
+    document.body.appendChild(overlay);
+  }
+
   function saveContact() {
+    if (isWeChat) {
+      showWeChatGuide();
+      return;
+    }
+
     var vcard = buildVCard();
     var fileName = (data.name || 'contact') + '.vcf';
     var blob = new Blob([vcard], { type: 'text/vcard;charset=utf-8' });
     var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
     if (isIOS) {
-      // Try blob URL first (works in Safari)
-      var blobUrl = URL.createObjectURL(blob);
-      window.location.href = blobUrl;
-      // Fallback for in-app browsers (WeChat, DingTalk, etc.)
-      // If blob URL didn't trigger contacts UI, try data URI after a short delay
-      setTimeout(function() {
-        var reader = new FileReader();
-        reader.onload = function() {
-          window.location.href = reader.result;
-        };
-        reader.readAsDataURL(blob);
-      }, 1500);
+      window.location.href = URL.createObjectURL(blob);
       return;
     }
 
