@@ -370,22 +370,27 @@
     var vcard = buildVCard();
     var fileName = (data.name || 'contact') + '.vcf';
     var blob = new Blob([vcard], { type: 'text/vcard;charset=utf-8' });
+    var debug = 'share:' + !!navigator.share + ' canShare:' + !!navigator.canShare;
     try {
       var file = new File([blob], fileName, { type: 'text/vcard' });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      var cs = navigator.canShare ? navigator.canShare({ files: [file] }) : false;
+      debug += ' canShareFile:' + cs;
+      if (cs) {
         navigator.share({ files: [file] }).then(function() {
           showToast('Contact shared successfully!');
         }).catch(function(err) {
           if (err.name !== 'AbortError') {
-            showToast('Share cancelled. Trying download...', 3000);
             window.location.href = buildVCardUrl();
           }
         });
         return;
       }
-    } catch(ex) {}
+    } catch(ex) {
+      debug += ' error:' + ex.message;
+    }
 
     // Fallback: server URL download + toast hint
+    alert('DEBUG: ' + debug);
     window.location.href = buildVCardUrl();
     showToast('File downloaded. Open it from notifications to add contact.', 6000);
   }
