@@ -8,7 +8,7 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #f0f2f5;
+    background: #000000;
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -262,16 +262,24 @@
     if (data.address) vcard += 'ADR;TYPE=WORK:;;' + data.address + ';;;;\n';
     vcard += 'END:VCARD';
 
-    // Try iOS/Android native share first, fallback to download
     const blob = new Blob([vcard], { type: 'text/vcard' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = data.name.replace(/\s+/g, '_') + '.vcf';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+
+    // On iOS Safari, navigate directly to blob URL to trigger native contacts
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (isIOS) {
+      window.location.href = url;
+    } else {
+      // On Android and desktop, use <a> link without download attribute
+      // so the system opens the .vcf with the contacts app
+      const a = document.createElement('a');
+      a.href = url;
+      a.setAttribute('type', 'text/vcard');
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
   }
 </script>
 </body>
