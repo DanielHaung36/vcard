@@ -330,9 +330,7 @@
 
   function showWeChatGuide() {
     var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    var hint = isIOS
-      ? 'Tap <b>⋯</b> in the top-right corner<br>then select <b>"Open in Safari"</b><br>to save the contact'
-      : 'Tap <b>⋮</b> in the top-right corner<br>then select <b>"Open in Browser"</b><br>to save the contact';
+    var hint = 'Tap <b>⋯</b> in the top-right corner<br>then select <b>"Open in Default Browser"</b><br>to save the contact';
     var overlay = document.createElement('div');
     overlay.className = 'wechat-overlay';
     overlay.innerHTML = '<div class="arrow">⬆</div><div class="hint">' + hint + '</div>';
