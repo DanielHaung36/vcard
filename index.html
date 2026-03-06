@@ -370,29 +370,22 @@
     var vcard = buildVCard();
     var fileName = (data.name || 'contact') + '.vcf';
     var blob = new Blob([vcard], { type: 'text/vcard;charset=utf-8' });
-    var debug = 'share:' + !!navigator.share + ' canShare:' + !!navigator.canShare;
     try {
       var file = new File([blob], fileName, { type: 'text/vcard' });
-      var cs = navigator.canShare ? navigator.canShare({ files: [file] }) : false;
-      debug += ' canShareFile:' + cs;
-      if (cs) {
-        navigator.share({ files: [file] }).then(function() {
-          showToast('Contact shared successfully!');
-        }).catch(function(err) {
-          if (err.name !== 'AbortError') {
-            window.location.href = buildVCardUrl();
-          }
-        });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file] }).catch(function() {});
         return;
       }
-    } catch(ex) {
-      debug += ' error:' + ex.message;
-    }
+    } catch(ex) {}
 
-    // Fallback: server URL download + toast hint
-    alert('DEBUG: ' + debug);
-    window.location.href = buildVCardUrl();
-    showToast('File downloaded. Open it from notifications to add contact.', 6000);
+    // Fallback: download .vcf via server URL
+    var a = document.createElement('a');
+    a.href = buildVCardUrl();
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    showToast('Contact file downloaded.\nOpen it from your Downloads to import.', 8000);
   }
 </script>
 </body>
