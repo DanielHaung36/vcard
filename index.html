@@ -373,14 +373,21 @@
     try {
       var file = new File([blob], fileName, { type: 'text/vcard' });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        navigator.share({ files: [file] }).catch(function() {});
+        navigator.share({ files: [file] }).then(function() {
+          showToast('Contact shared successfully!');
+        }).catch(function(err) {
+          if (err.name !== 'AbortError') {
+            showToast('Share cancelled. Trying download...', 3000);
+            window.location.href = buildVCardUrl();
+          }
+        });
         return;
       }
     } catch(ex) {}
 
     // Fallback: server URL download + toast hint
     window.location.href = buildVCardUrl();
-    showToast('File downloaded. Check your notifications and tap the .vcf file to import.', 6000);
+    showToast('File downloaded. Open it from notifications to add contact.', 6000);
   }
 </script>
 </body>
