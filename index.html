@@ -347,7 +347,7 @@
     if (data.email) p.set('e', data.email);
     if (data.website) p.set('w', data.website);
     if (data.address) p.set('a', data.address);
-    return '/api/vcard?' + p.toString();
+    return 'https://vcard-plum.vercel.app/api/vcard?' + p.toString();
   }
 
   function saveContact() {
