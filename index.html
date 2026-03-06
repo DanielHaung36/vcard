@@ -262,29 +262,9 @@
     if (data.address) vcard += 'ADR;TYPE=WORK:;;' + data.address + ';;;;\n';
     vcard += 'END:VCARD';
 
-    const fileName = (data.name || 'contact') + '.vcf';
-    const blob = new Blob([vcard], { type: 'text/vcard' });
-    const file = new File([blob], fileName, { type: 'text/vcard' });
-
-    // Try Web Share API first (works on Android Chrome for one-click save)
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      navigator.share({ files: [file] }).catch(function() {});
-    } else {
-      // Fallback: direct navigation for iOS, download for others
-      const url = URL.createObjectURL(blob);
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      if (isIOS) {
-        window.location.href = url;
-      } else {
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
-      }
-    }
+    // Use data URI to trigger system intent (contacts app) on both iOS and Android
+    var dataUri = 'data:text/vcard;base64,' + btoa(unescape(encodeURIComponent(vcard)));
+    window.location.href = dataUri;
   }
 </script>
 </body>
