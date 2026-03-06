@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>vCard QR Code Generator</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f0f2f5;
+    min-height: 100vh;
+    padding: 40px 20px;
+  }
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  h1 {
+    text-align: center;
+    color: #1a1a2e;
+    margin-bottom: 8px;
+    font-size: 28px;
+  }
+  .subtitle {
+    text-align: center;
+    color: #888;
+    margin-bottom: 40px;
+    font-size: 14px;
+  }
+  .form-section {
+    background: #fff;
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    margin-bottom: 32px;
+  }
+  .form-section h2 {
+    font-size: 18px;
+    color: #1a1a2e;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f0f0f0;
+  }
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 600px) {
+    .form-grid { grid-template-columns: 1fr; }
+  }
+  .form-group {
+    display: flex;
+    flex-direction: column;
+  }
+  .form-group.full { grid-column: 1 / -1; }
+  label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  label .required { color: #e74c3c; }
+  input {
+    padding: 12px 14px;
+    border: 2px solid #e8e8e8;
+    border-radius: 10px;
+    font-size: 15px;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+  input:focus { border-color: #1a1a2e; }
+  .base-url-group {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+  .base-url-group label {
+    display: block;
+    margin-bottom: 6px;
+  }
+  .base-url-group input {
+    width: 100%;
+  }
+  .base-url-hint {
+    font-size: 12px;
+    color: #999;
+    margin-top: 4px;
+  }
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    margin-top: 8px;
+  }
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(26,26,46,0.3);
+  }
+  .result {
+    background: #fff;
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    text-align: center;
+    display: none;
+  }
+  .result h2 { margin-bottom: 20px; color: #1a1a2e; }
+  #qrcode {
+    display: inline-block;
+    padding: 16px;
+    background: #fff;
+    border-radius: 12px;
+    border: 2px solid #f0f0f0;
+  }
+  #qrcode canvas { display: block; }
+  .result-url {
+    margin-top: 16px;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    word-break: break-all;
+    font-size: 13px;
+    color: #555;
+    cursor: pointer;
+    position: relative;
+  }
+  .result-url:hover { background: #eef; }
+  .result-url::after {
+    content: 'Click to copy';
+    position: absolute;
+    top: -24px;
+    right: 0;
+    font-size: 11px;
+    color: #999;
+  }
+  .copy-toast {
+    display: none;
+    color: #2e7d32;
+    font-size: 14px;
+    margin-top: 8px;
+    font-weight: 600;
+  }
+  .result-actions {
+    margin-top: 20px;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+  }
+  .btn-sm {
+    padding: 10px 24px;
+    border-radius: 10px;
+    border: 2px solid #1a1a2e;
+    background: #fff;
+    color: #1a1a2e;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-sm:hover { background: #1a1a2e; color: #fff; }
+  .saved-list {
+    background: #fff;
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    margin-top: 32px;
+  }
+  .saved-list h2 {
+    font-size: 18px;
+    color: #1a1a2e;
+    margin-bottom: 16px;
+  }
+  .saved-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .saved-item:last-child { border-bottom: none; }
+  .saved-info { font-size: 15px; color: #333; }
+  .saved-info small { color: #999; display: block; font-size: 12px; }
+  .saved-actions { display: flex; gap: 8px; }
+  .btn-xs {
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    background: #fff;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-xs:hover { background: #f0f0f0; }
+  .btn-xs.danger:hover { background: #fee; color: #c00; border-color: #fcc; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>vCard QR Code Generator</h1>
+  <p class="subtitle">Generate QR codes for your team's digital business cards</p>
+
+  <div class="form-section">
+    <div class="base-url-group">
+      <label>Base URL <span class="required">*</span></label>
+      <input type="text" id="baseUrl" placeholder="https://yourdomain.com/vcard/" value="">
+      <div class="base-url-hint">The URL where index.html is hosted. Each person's QR code will point to this URL with their info.</div>
+    </div>
+
+    <h2>Company Info (shared)</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Company Name</label>
+        <input type="text" id="company" placeholder="e.g. Acme Inc.">
+      </div>
+      <div class="form-group">
+        <label>Website</label>
+        <input type="text" id="website" placeholder="e.g. www.acme.com">
+      </div>
+      <div class="form-group full">
+        <label>Address</label>
+        <input type="text" id="address" placeholder="e.g. 123 Main St, City, Country">
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <h2>Person Info</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Full Name <span class="required">*</span></label>
+        <input type="text" id="name" placeholder="e.g. John Smith">
+      </div>
+      <div class="form-group">
+        <label>Job Title</label>
+        <input type="text" id="title" placeholder="e.g. Sales Manager">
+      </div>
+      <div class="form-group">
+        <label>Phone</label>
+        <input type="text" id="phone" placeholder="e.g. +1 234 567 8900">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="text" id="email" placeholder="e.g. john@acme.com">
+      </div>
+    </div>
+    <button class="btn" onclick="generate()">Generate QR Code</button>
+  </div>
+
+  <div class="result" id="result">
+    <h2 id="resultName"></h2>
+    <div id="qrcode"></div>
+    <div class="result-url" id="resultUrl" onclick="copyUrl()"></div>
+    <div class="copy-toast" id="copyToast">Copied!</div>
+    <div class="result-actions">
+      <button class="btn-sm" onclick="downloadQR()">Download QR</button>
+      <button class="btn-sm" onclick="saveToList()">Save to List</button>
+      <button class="btn-sm" onclick="previewCard()">Preview Card</button>
+    </div>
+  </div>
+
+  <div class="saved-list" id="savedList" style="display:none;">
+    <h2>Saved Cards</h2>
+    <div id="savedItems"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script>
+  let currentUrl = '';
+  let savedCards = JSON.parse(localStorage.getItem('vcard_saved') || '[]');
+
+  // Load saved company info
+  const savedCompany = JSON.parse(localStorage.getItem('vcard_company') || '{}');
+  if (savedCompany.company) document.getElementById('company').value = savedCompany.company;
+  if (savedCompany.website) document.getElementById('website').value = savedCompany.website;
+  if (savedCompany.address) document.getElementById('address').value = savedCompany.address;
+  if (savedCompany.baseUrl) document.getElementById('baseUrl').value = savedCompany.baseUrl;
+
+  renderSavedList();
+
+  function generate() {
+    const name = document.getElementById('name').value.trim();
+    if (!name) { alert('Please enter a name.'); return; }
+
+    const baseUrl = document.getElementById('baseUrl').value.trim();
+    if (!baseUrl) { alert('Please enter the base URL.'); return; }
+
+    // Save company info
+    const companyInfo = {
+      company: document.getElementById('company').value.trim(),
+      website: document.getElementById('website').value.trim(),
+      address: document.getElementById('address').value.trim(),
+      baseUrl: baseUrl,
+    };
+    localStorage.setItem('vcard_company', JSON.stringify(companyInfo));
+
+    const params = new URLSearchParams();
+    params.set('n', name);
+    const title = document.getElementById('title').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const email = document.getElementById('email').value.trim();
+    if (title) params.set('t', title);
+    if (companyInfo.company) params.set('c', companyInfo.company);
+    if (phone) params.set('p', phone);
+    if (email) params.set('e', email);
+    if (companyInfo.website) params.set('w', companyInfo.website);
+    if (companyInfo.address) params.set('a', companyInfo.address);
+
+    // Use hash-based params for maximum compatibility with static hosting
+    const base = baseUrl.replace(/\/$/, '') + (baseUrl.endsWith('.html') ? '' : '/index.html');
+    currentUrl = base + '#' + params.toString();
+
+    // Generate QR
+    const qr = qrcode(0, 'M');
+    qr.addData(currentUrl);
+    qr.make();
+
+    const qrDiv = document.getElementById('qrcode');
+    qrDiv.innerHTML = '';
+    const size = 280;
+    const canvas = document.createElement('canvas');
+    const cellSize = Math.floor(size / qr.getModuleCount());
+    const actualSize = cellSize * qr.getModuleCount();
+    canvas.width = actualSize;
+    canvas.height = actualSize;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, actualSize, actualSize);
+    ctx.fillStyle = '#1a1a2e';
+    for (let r = 0; r < qr.getModuleCount(); r++) {
+      for (let c = 0; c < qr.getModuleCount(); c++) {
+        if (qr.isDark(r, c)) {
+          ctx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
+        }
+      }
+    }
+    qrDiv.appendChild(canvas);
+
+    document.getElementById('resultName').textContent = name + (title ? ' - ' + title : '');
+    document.getElementById('resultUrl').textContent = currentUrl;
+    document.getElementById('result').style.display = 'block';
+    document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function copyUrl() {
+    navigator.clipboard.writeText(currentUrl).then(() => {
+      const toast = document.getElementById('copyToast');
+      toast.style.display = 'block';
+      setTimeout(() => toast.style.display = 'none', 2000);
+    });
+  }
+
+  function downloadQR() {
+    const canvas = document.querySelector('#qrcode canvas');
+    if (!canvas) return;
+    const name = document.getElementById('name').value.trim().replace(/\s+/g, '_');
+    const link = document.createElement('a');
+    link.download = 'QR_' + name + '.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }
+
+  function previewCard() {
+    window.open(currentUrl, '_blank');
+  }
+
+  function saveToList() {
+    const card = {
+      name: document.getElementById('name').value.trim(),
+      title: document.getElementById('title').value.trim(),
+      phone: document.getElementById('phone').value.trim(),
+      email: document.getElementById('email').value.trim(),
+      url: currentUrl,
+    };
+    // Check if already saved
+    const exists = savedCards.findIndex(c => c.name === card.name);
+    if (exists >= 0) {
+      savedCards[exists] = card;
+    } else {
+      savedCards.push(card);
+    }
+    localStorage.setItem('vcard_saved', JSON.stringify(savedCards));
+    renderSavedList();
+  }
+
+  function renderSavedList() {
+    const container = document.getElementById('savedItems');
+    const list = document.getElementById('savedList');
+    if (savedCards.length === 0) { list.style.display = 'none'; return; }
+    list.style.display = 'block';
+    container.innerHTML = savedCards.map((card, i) => `
+      <div class="saved-item">
+        <div class="saved-info">
+          <strong>${card.name}</strong>${card.title ? ' - ' + card.title : ''}
+          <small>${card.email || ''} ${card.phone || ''}</small>
+        </div>
+        <div class="saved-actions">
+          <button class="btn-xs" onclick="showSavedQR(${i})">QR</button>
+          <button class="btn-xs" onclick="window.open('${card.url}','_blank')">Preview</button>
+          <button class="btn-xs danger" onclick="removeSaved(${i})">Remove</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function showSavedQR(index) {
+    const card = savedCards[index];
+    currentUrl = card.url;
+    document.getElementById('name').value = card.name;
+    document.getElementById('title').value = card.title;
+    document.getElementById('phone').value = card.phone;
+    document.getElementById('email').value = card.email;
+    generate();
+  }
+
+  function removeSaved(index) {
+    savedCards.splice(index, 1);
+    localStorage.setItem('vcard_saved', JSON.stringify(savedCards));
+    renderSavedList();
+  }
+</script>
+</body>
+</html>
