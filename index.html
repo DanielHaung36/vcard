@@ -366,9 +366,21 @@
       return;
     }
 
-    // Android: use server URL with proper Content-Type headers
-    // Most Android browsers will prompt "Import to Contacts" for real .vcf URLs
+    // Android: try Web Share API first (shows share sheet → pick Contacts)
+    var vcard = buildVCard();
+    var fileName = (data.name || 'contact') + '.vcf';
+    var blob = new Blob([vcard], { type: 'text/vcard;charset=utf-8' });
+    try {
+      var file = new File([blob], fileName, { type: 'text/vcard' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file] }).catch(function() {});
+        return;
+      }
+    } catch(ex) {}
+
+    // Fallback: server URL download + toast hint
     window.location.href = buildVCardUrl();
+    showToast('File downloaded. Check your notifications and tap the .vcf file to import.', 6000);
   }
 </script>
 </body>
