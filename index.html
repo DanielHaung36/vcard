@@ -262,23 +262,28 @@
     if (data.address) vcard += 'ADR;TYPE=WORK:;;' + data.address + ';;;;\n';
     vcard += 'END:VCARD';
 
+    const fileName = (data.name || 'contact') + '.vcf';
     const blob = new Blob([vcard], { type: 'text/vcard' });
-    const url = URL.createObjectURL(blob);
+    const file = new File([blob], fileName, { type: 'text/vcard' });
 
-    // On iOS Safari, navigate directly to blob URL to trigger native contacts
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    if (isIOS) {
-      window.location.href = url;
+    // Try Web Share API first (works on Android Chrome for one-click save)
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file] }).catch(function() {});
     } else {
-      // On Android and desktop, use <a> link without download attribute
-      // so the system opens the .vcf with the contacts app
-      const a = document.createElement('a');
-      a.href = url;
-      a.setAttribute('type', 'text/vcard');
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      // Fallback: direct navigation for iOS, download for others
+      const url = URL.createObjectURL(blob);
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      if (isIOS) {
+        window.location.href = url;
+      } else {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+      }
     }
   }
 </script>
